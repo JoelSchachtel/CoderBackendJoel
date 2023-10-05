@@ -1,34 +1,33 @@
-const fs = require('fs');
+onst fs = require('fs').promises;
 
 class ProductManager {
-  constructor(filePath) {
-    this.path = filePath;
+  constructor(path) {
+    this.path = path;
     this.products = [];
     this.loadProducts();
   }
 
-  loadProducts() {
+  async loadProducts() {
     try {
-      const data = fs.readFileSync(this.path, 'utf8');
+      const data = await fs.readFile(this.path, 'utf-8');
       this.products = JSON.parse(data);
     } catch (error) {
-      // Si el archivo no existe o hay un error al leerlo, inicializamos products como un array vacío.
       this.products = [];
     }
   }
 
-  saveProducts() {
+  async saveProducts() {
     const data = JSON.stringify(this.products, null, 2);
-    fs.writeFileSync(this.path, data);
+    await fs.writeFile(this.path, data);
   }
 
-  addProduct(product) {
+  async addProduct(producto) {
     const newProduct = {
       id: this.generateId(),
-      ...product,
+      ...producto,
     };
     this.products.push(newProduct);
-    this.saveProducts();
+    await this.saveProducts();
     return newProduct;
   }
 
@@ -47,76 +46,69 @@ class ProductManager {
     return this.products.find((product) => product.id === id);
   }
 
-  updateProduct(id, updatedProduct) {
+  async updateProduct(id, productoActualizado) {
     const index = this.products.findIndex((product) => product.id === id);
     if (index !== -1) {
-      // Actualizamos el producto en la posición index
-      this.products[index] = { ...this.products[index], ...updatedProduct };
-      this.saveProducts();
+      this.products[index] = { ...this.products[index], ...productoActualizado };
+      await this.saveProducts();
       return this.products[index];
     }
     return null;
   }
 
-  deleteProduct(id) {
+  async deleteProduct(id) {
     const index = this.products.findIndex((product) => product.id === id);
     if (index !== -1) {
-      // Eliminamos el producto en la posición index
       this.products.splice(index, 1);
-      this.saveProducts();
+      await this.saveProducts();
       return true;
     }
     return false;
   }
 }
 
+async function testProductManager() {
+  const productManager = new ProductManager('productos.json');
 
-function testProductManager() {
-    const productManager = new ProductManager('products.json');
-  
-    // Paso 2: Comprobar que getProducts() devuelve un arreglo vacío al crear la instancia
-    let products = productManager.getProducts();
-    console.assert(products.length === 0, "Expected an empty products array");
-  
-    // Paso 3: Añadir un producto
-    const testProduct = {
-      title: "producto prueba",
-      description: "Este es un producto prueba",
-      price: 200,
-      thumbnail: "Sin imagen",
-      code: "abc123",
-      stock: 25,
-    };
-  
-    const addedProduct = productManager.addProduct(testProduct);
-  
-    // Asegurarse de que se genera un ID automáticamente
-    console.log(addedProduct.id !== undefined, "Expected product to have an ID");
-  
-    // Paso 5: Comprobar que getProducts() ahora contiene el producto
-    products = productManager.getProducts();
-    console.log(products.length === 1, "Expected products array to contain one product");
-    console.log(products[0].title === testProduct.title, "Expected product title to match");
-  
-    // Paso 6: Obtener producto por ID
-    const fetchedProduct = productManager.getProductById(addedProduct.id);
-    console.log(fetchedProduct !== undefined, "Expected to find product by ID");
-  
-    // Paso 7: Actualizar producto
-    const updatedFields = {
-      title: "producto prueba actualizado",
-    };
-    const updatedProduct = productManager.updateProduct(addedProduct.id, updatedFields);
-    console.log(updatedProduct.title === updatedFields.title, "Expected product title to be updated");
-    console.log(updatedProduct.id === addedProduct.id, "Expected product ID to remain unchanged");
-  
-    // Paso 8: Eliminar producto
-    const isDeleted = productManager.deleteProduct(addedProduct.id);
-    console.log(isDeleted, "Expected product to be deleted");
-    const deletedProduct = productManager.getProductById(addedProduct.id);
-    console.log(deletedProduct === undefined, "Expected not to find the deleted product by ID");
-  
-    console.log("All tests passed!");
-  }
+  await productManager.loadProducts();
+  let productos = productManager.getProducts();
+  console.assert(productos.length === 0, "Se esperaba un arreglo de productos vacío");
 
-testProductManager(); 
+  const productoPrueba = {
+    title: "producto prueba",
+    description: "Este es un producto de prueba",
+    price: 200,
+    thumbnail: "Sin imagen",
+    code: "abc123",
+    stock: 25,
+  };
+
+  const productoAgregado = await productManager.addProduct(productoPrueba);
+
+  console.assert(productoAgregado.id !== undefined, "Se esperaba que el producto tuviera un ID");
+
+  productos = productManager.getProducts();
+  console.assert(productos.length === 1, "Se esperaba que el arreglo de productos contenga un producto");
+  console.assert(productos[0].title === productoPrueba.title, "Se esperaba que el título del producto coincidiera");
+
+  const productoObtenido = productManager.getProductById(productoAgregado.id);
+  console.assert(productoObtenido !== undefined, "Se esperaba encontrar un producto por ID");
+
+  const camposActualizados = {
+    title: "producto prueba actualizado",
+  };
+  const productoActualizado = await productManager.updateProduct(productoAgregado.id, camposActualizados);
+  console.assert(productoActualizado.title === camposActualizados.title, "Se esperaba que el título del producto fuera actualizado");
+  console.assert(productoActualizado.id === productoAgregado.id, "Se esperaba que el ID del producto permaneciera sin cambios");
+
+  const eliminado = await productManager.deleteProduct(productoAgregado.id);
+  console.assert(eliminado, "Se esperaba que el producto fuera eliminado");
+  const productoEliminado = productManager.getProductById(productoAgregado.id);
+  console.assert(productoEliminado === undefined, "No se esperaba encontrar el producto eliminado por ID");
+
+  console.log("¡Todos los tests han pasado!");
+}
+
+testProductManager().catch(error => {
+  console.error("Error durante los tests:", error);
+});

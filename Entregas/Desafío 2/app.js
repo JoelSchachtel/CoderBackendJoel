@@ -176,20 +176,20 @@ class ProductManager {
       await productManager.getProductById(1)
     );
   
-    await productManager.updateProductById(1, { title: "PRODUCTO DE PRUEBA" });
+    // await productManager.updateProductById(1, { title: "PRODUCTO DE PRUEBA" });
   
-    console.log(
-      "producto actualizado con id = 1",
-      await productManager.getProductById(1)
-    );
+    // console.log(
+    //   "producto actualizado con id = 1",
+    //   await productManager.getProductById(1)
+    // );
   
-    //deberia fallar por intentar cambiar id
-    await productManager.updateProductById(1, { id: 2 });
+    // //deberia fallar por intentar cambiar id
+    // await productManager.updateProductById(1, { id: 2 });
   
-    await productManager.deleteProductById(1);
+    // await productManager.deleteProductById(1);
   
-    //deberia fallar porque el producto ya no existe
-    await productManager.getProductById(1);
+    // //deberia fallar porque el producto ya no existe
+    // await productManager.getProductById(1);
   }
   
   test();

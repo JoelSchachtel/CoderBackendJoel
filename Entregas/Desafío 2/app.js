@@ -1,195 +1,114 @@
-const fs = require("fs");
+const fs = require('fs').promises;
 
 class ProductManager {
   constructor(path) {
     this.path = path;
+    this.products = [];
+    this.loadProducts();
   }
 
-  addProduct = async (newProduct) => {
+  async loadProducts() {
     try {
-      const validProduct = this.validateProduct(newProduct);
-      const products = await this.getProducts();
-      const repeatedCode = products.find(
-        (product) => product.code === newProduct.code
-      );
-      if (!validProduct && repeatedCode) {
-        return console.error(
-          "Carga incorrecta. El código del producto que intenta agregar ya existe."
-        );
-      }
-      newProduct.id = products.length
-        ? products[products.length - 1].id + 1
-        : 1;
-
-      products.push(newProduct);
-
-      fs.promises.writeFile(this.path, JSON.stringify(products)).then(() => {
-        return console.log("Producto cargado correctamente.");
-      });
+      const data = await fs.readFile(this.path, 'utf-8');
+      this.products = JSON.parse(data);
     } catch (error) {
-      console.log(error);
-    }
-  };
-
-  validateProduct(product) {
-    return (
-      product.title &&
-      product.description &&
-      product.price &&
-      product.thumbnail &&
-      product.code &&
-      product.stock
-    );
-  };
-
-  getProductsFromFile = async () => {
-    try {
-      if (!fs.existsSync(this.path)) {
-        const products = [];
-
-        await fs.promises.writeFile(this.path, JSON.stringify(products));
-        return products;
-      }
-
-      const products = JSON.parse(await fs.promises.readFile(this.path));
-
-      return products;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  getProducts = async () => {
-    try {
-      const products = await this.getProductsFromFile();
-      return products;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  getProductById = async (id) => {
-    try {
-      const products = await this.getProducts();
-      let foundProduct;
-      products.find((product) => {
-        if (product.id === id) {
-          foundProduct = { ...product };
-        }
-        if (foundProduct) {
-            return foundProduct;
-        } else {
-            throw new Error('No se encontró el producto con el ID solicitado.')
-        }
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  updateProductById = async (id, newProductInfo) => {
-    try {
-        if (newProductInfo.id || newProductInfo.code) {
-          throw Error("No puedes cambiar el código.");
-        }
-  
-        let product = { ...(await this.getProductById(id)) };
-  
-        const products = await this.getProducts();
-  
-        let found_index;
-  
-        products.find((product, index) => {
-          if (product.id === id) {
-            found_index = index;
-          }
-        });
-  
-        product = {...product,...newProductInfo };
-  
-        products[found_index] = product;
-  
-        fs.promises.writeFile(this.path, JSON.stringify(products)).then(() => {
-          return console.log("Producto actualizado correctamente.");
-        });
-      } catch (error) {
-        console.error(error);
-      }
-  };
-
-  deleteProductById = async (id) => {
-    try {
-        const products = await this.getProducts();
-  
-        await this.getProductById(id);
-  
-        let found_index;
-  
-        products.find((product, index) => {
-          if (product.id === id) {
-            found_index = index;
-          }
-        });
-  
-        products.splice(found_index, 1);
-  
-        fs.promises.writeFile(this.path, JSON.stringify(products)).then(() => {
-          return console.log("Product deleted");
-        });
-      } catch (error) {
-        console.error(error);
-      }
+      this.products = [];
     }
   }
 
-  class Product {
-    constructor(title, description, price, thumbnail, code, stock) {
-      this.title = title;
-      this.description = description;
-      this.price = price;
-      this.thumbnail = thumbnail;
-      this.code = code;
-      this.stock = stock;
-    }
+  async saveProducts() {
+    const data = JSON.stringify(this.products, null, 2);
+    await fs.writeFile(this.path, data);
   }
 
-  async function test() {
-    const productManager = new ProductManager("products.json");
-  
-    console.log("productos hasta ahora", await productManager.getProducts());
-  
-    const newProduct = new Product(
-      "producto prueba",
-      "Este es un producto prueba",
-      200,
-      "Sin imagen",
-      "abc123",
-      25
-    );
-  
-    await productManager.addProduct(newProduct);
-  
-    console.log("producto añadido", await productManager.getProducts());
-  
-    console.log(
-      "obtener producto por id = 1",
-      await productManager.getProductById(1)
-    );
-  
-    // await productManager.updateProductById(1, { title: "PRODUCTO DE PRUEBA" });
-  
-    // console.log(
-    //   "producto actualizado con id = 1",
-    //   await productManager.getProductById(1)
-    // );
-  
-    // //deberia fallar por intentar cambiar id
-    // await productManager.updateProductById(1, { id: 2 });
-  
-    // await productManager.deleteProductById(1);
-  
-    // //deberia fallar porque el producto ya no existe
-    // await productManager.getProductById(1);
+  async addProduct(producto) {
+    const newProduct = {
+      id: this.generateId(),
+      ...producto,
+    };
+    this.products.push(newProduct);
+    await this.saveProducts();
+    return newProduct;
   }
-  
-  test();
+
+  generateId() {
+    const maxId = this.products.reduce((max, product) => {
+      return product.id > max ? product.id : max;
+    }, 0);
+    return maxId + 1;
+  }
+
+  getProducts() {
+    return this.products;
+  }
+
+  getProductById(id) {
+    return this.products.find((product) => product.id === id);
+  }
+
+  async updateProduct(id, productoActualizado) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      this.products[index] = { ...this.products[index], ...productoActualizado };
+      await this.saveProducts();
+      return this.products[index];
+    }
+    return null;
+  }
+
+  async deleteProduct(id) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      this.products.splice(index, 1);
+      await this.saveProducts();
+      return true;
+    }
+    return false;
+  }
+}
+
+async function testProductManager() {
+  const productManager = new ProductManager('productos.json');
+
+  await productManager.loadProducts();
+  let productos = productManager.getProducts();
+  console.assert(productos.length === 0, "Se esperaba un arreglo de productos vacío");
+
+  const productoPrueba = {
+    title: "producto prueba",
+    description: "Este es un producto de prueba",
+    price: 200,
+    thumbnail: "Sin imagen",
+    code: "abc123",
+    stock: 25,
+  };
+
+  const productoAgregado = await productManager.addProduct(productoPrueba);
+
+  console.assert(productoAgregado.id !== undefined, "Se esperaba que el producto tuviera un ID");
+
+  productos = productManager.getProducts();
+  console.assert(productos.length === 1, "Se esperaba que el arreglo de productos contenga un producto");
+  console.assert(productos[0].title === productoPrueba.title, "Se esperaba que el título del producto coincidiera");
+
+  const productoObtenido = productManager.getProductById(productoAgregado.id);
+  console.assert(productoObtenido !== undefined, "Se esperaba encontrar un producto por ID");
+
+  const camposActualizados = {
+    title: "producto prueba actualizado",
+  };
+  const productoActualizado = await productManager.updateProduct(productoAgregado.id, camposActualizados);
+  console.assert(productoActualizado.title === camposActualizados.title, "Se esperaba que el título del producto fuera actualizado");
+  console.assert(productoActualizado.id === productoAgregado.id, "Se esperaba que el ID del producto permaneciera sin cambios");
+
+  const eliminado = await productManager.deleteProduct(productoAgregado.id);
+  console.assert(eliminado, "Se esperaba que el producto fuera eliminado");
+  const productoEliminado = productManager.getProductById(productoAgregado.id);
+  console.assert(productoEliminado === undefined, "No se esperaba encontrar el producto eliminado por ID");
+
+  console.log("¡Todos los tests han pasado!");
+}
+
+testProductManager().catch(error => {
+  console.error("Error durante los tests:", error);
+});

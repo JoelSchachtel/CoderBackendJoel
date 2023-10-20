@@ -1,4 +1,4 @@
-onst fs = require('fs').promises;
+const fs = require('fs').promises;
 
 class ProductManager {
   constructor(path) {

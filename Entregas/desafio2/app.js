@@ -67,3 +67,26 @@ class ProductManager {
         await fs.promises.writeFile(this.path, JSON.stringify(data))
     }
 }
+
+
+
+async function run(){
+    const manager = new ProductManager('./desafio2/fs/products.json')
+
+    // Realizando el Testing
+
+    //Se llama al método getProduct y se agrega el objeto conel ID generado aleatoriamente y no se repite
+    await manager.addProduct('Producto prueba', 'Este es un producto de prueba', 200, 'Sin imágen', 25, 'abc123')
+    console.log('El objeto fue agregado satisfactoriamente. Se ha generado el id aleatoriamente.')
+    //Se llama al método getProducts
+    console.log(await manager.getProduct());
+    //Se llama al método getProductById
+    console.log(await manager.getProductById(1))
+    //Se llama al método updateProduct
+    await manager.updateProduct(1, "title", "PRODUCTO ACTUALIZADO")
+    await manager.updateProduct(1, "stock", 150)
+    //Se llama al método deleteProduct
+    await manager.deleteProduct(2)
+}
+
+run()

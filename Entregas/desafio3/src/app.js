@@ -1,34 +1,28 @@
-import express from 'express'
-import ProductManager from './productManager.js'
-
-const productManager = new ProductManager('./products.json')
+const express = require('express');
+const fs = require('fs');
+const path = './fs/products.json';
+const format = 'utf-8';
+const products = fs.readFileSync(path, format);
+const parsedProducts = JSON.parse(products);
 
 const app = express();
 
-app.get('/products', async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+app.get('/products', (req, res) => {
+    const limit = req.query.limit;
 
-  const products = await productManager.getProducts();
+    if (limit) {
+        res.send(parsedProducts.slice(0, limit))
+    } else {
+        res.send(parsedProducts)
+    };
+})
+app.get('/products/:pid', (req, res) => {
+    const productID = req.params.pid 
+    
+    const product = parsedProducts.find(product => product.id == productID)
+    
+    if(!product) res.send(`<h2>Error: Product not found.</h2>`)
+    else res.send(product)
+})
 
-  if (limit) {
-    res.json(products.slice(0, limit));
-  } else {
-    res.json(products);
-  }
-});
-
-app.get('/products/:pid', async (req, res) => {
-  const pid = req.params.pid;
-
-  const product = await productManager.getProductById(pid);
-
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).send('Producto no encontrado');
-  }
-});
-
-app.listen(8080, () => {
-  console.log('Servidor iniciado en el puerto 8080');
-});
+app.listen(8080, () => console.log('Server is running ...'))

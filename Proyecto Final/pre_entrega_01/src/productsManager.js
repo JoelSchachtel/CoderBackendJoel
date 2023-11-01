@@ -73,4 +73,4 @@ class ProductsManager {
     };
 };
 
-export const productsManager = new ProductsManager('./src/products.json');
+export const productsManager = new ProductsManager('./src/fs/products.json');

@@ -1,0 +1,54 @@
+<h2>--- Real time products ---</h2>
+<h3 id="welcome+name">Welcome</h3>
+<h4>Real time products list</h4>
+
+<div class="container text-center">
+    <div class="container mb-5">
+        <div class="row">
+            <form id="form-inputs">
+                <div class="mb-3">
+                    <label class="form-label">Title: </label>
+                    <input type="text" class="fomr-control" id="inputTitle" placeholder="Title">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description: </label>
+                    <input type="text" class="fomr-control" id="inputDescrip" placeholder="Description">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Price: </label>
+                    <input type="number" class="fomr-control" id="inputPrice" placeholder="Price">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Code: </label>
+                    <input type="text" class="fomr-control" id="inputCode" placeholder="Code">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Stock: </label>
+                    <input type="number" class="fomr-control" id="inputStock" placeholder="Stock">
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnAdd">Add</button>
+            </form>
+        </div>
+        <hr>
+        <table class="table table-bordered" id="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Thumbnail</th>
+                    <th>Code</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody id="data"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+<script src="/js/realtimeproducts.js"></script>
